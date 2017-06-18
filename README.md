@@ -1,7 +1,12 @@
-# Namespace Sync
+# NSync
 
-Sync selected secrets from current namespace to selected namespaces.
+Sync selected secrets and configmaps across namespaces.
 
+
+# How it works
+NSync keeps an eye on all secrets and configmaps in the current namespace that have the annotaion `nsync.verloop.io/managed="true"`
+
+Whenever it encounters a namespace with the annotation `nsync.verloop.io/managed="true"`, it starts syncing the secrets and configmaps to the namespace.
 
 # Installing
 
@@ -18,30 +23,29 @@ nSync --kubeconfig=$HOME/.kube/config
 ## Inside the cluster
 
 ```bash
-kubectl run verloop-nsync --image=verloopio/nsync:stable
+kubectl run verloop-nsync --image=verloopio/nsync:0.0.3
 ```
 
 # Usage
 
-## Start syncing a namespace
+## Add a namespace to be synced
 
 ```bash
 kubectl create ns hello
-kubectl annotate namespace/hello verloop.io/managed="true" --overwrite
+kubectl annotate namespace/hello nsync.verloop.io/managed="true" --overwrite
 ```
 
 ## Start syncing a secret
 ```bash
 kubectl create secret generic my-secret --from-literal=super=secret
-kubectl annotate secrets/my-secret verloop.io/managed="true" --overwrite
+kubectl annotate secrets/my-secret nsync.verloop.io/managed="true" --overwrite
 ```
 
 ## Start syncing a configmap
 ```bash
 kubectl create configmap global-config --from-literal=hello=world
-kubectl annotate configmap/global-config verloop.io/managed="true" --overwrite
+kubectl annotate configmap/global-config nsync.verloop.io/managed="true" --overwrite
 ```
-
 
 
 # Building
@@ -55,7 +59,10 @@ docker push verloopio/nsync
 
 # FAQ
 
-## Why?
+## Why make this project?
 We run on a 1 namespace per customer model.
 
 I needed something to copy over common secrets and configmaps.
+
+## Why the name?
+Because it's gonna be me.

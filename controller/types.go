@@ -1,7 +1,7 @@
 package controller
 
 const (
-	VERLOOP_MANAGED_KEY = "verloop.io/managed"
+	VERLOOP_MANAGED_KEY = "nsync.verloop.io/managed"
 )
 
 type ObjectType uint8
