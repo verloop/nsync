@@ -1,0 +1,17 @@
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: verloop-nsync
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: verloop-nsync
+        type: syncer
+      name: verloop-nsync
+    spec:
+      containers:
+      - name: verloop-nsync
+        image: verloopio/nsync:0.0.1
