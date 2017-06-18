@@ -14,9 +14,9 @@ import (
 
 func main() {
 	var kubeconfig *string
-
-	kubeconfig = flag.String("kubeconfig", "", "absolute path to the kubeconfig file")
-
+	var tickInterval *uint
+	flag.StringVar(kubeconfig, "kubeconfig", "", "absolute path to the kubeconfig file")
+	flag.UintVar(tickInterval, "tickinterval", 30, "time in seconds after which we should force a resync")
 	flag.Parse()
 
 	config, err := clientcmd.BuildConfigFromFlags("", *kubeconfig)
@@ -29,7 +29,7 @@ func main() {
 	if err != nil {
 		log.Fatalln("clientset error:", err)
 	}
-	nc := controller.NewNamespaceController(clientset, 255)
+	nc := controller.NewNamespaceController(clientset, *tickInterval)
 
 	err = nc.Start()
 	if err != nil {

@@ -11,13 +11,21 @@ import (
 	"time"
 )
 
-func NewNamespaceController(clientset *kubernetes.Clientset, tickInterval uint8) *NamespaceController {
+const (
+	MIN_TICK_INTERVAL = 10
+	MAX_TICK_INTERVAL = 300
+)
+
+func NewNamespaceController(clientset *kubernetes.Clientset, tickInterval uint) *NamespaceController {
 	managed := make(map[ObjectType]map[string]bool)
 	managed[NAMESPACE] = make(map[string]bool)
 	managed[CONFIGMAP] = make(map[string]bool)
 	managed[SECRET] = make(map[string]bool)
-	if tickInterval < 20 {
-		tickInterval = 20
+	if tickInterval < MIN_TICK_INTERVAL {
+		tickInterval = MIN_TICK_INTERVAL
+	}
+	if tickInterval > MAX_TICK_INTERVAL {
+		tickInterval = MAX_TICK_INTERVAL
 	}
 
 	// Check if namespace is given from outside
@@ -45,7 +53,7 @@ type NamespaceController struct {
 	clientSet      *kubernetes.Clientset
 	managed        map[ObjectType]map[string]bool
 	stopChan       chan bool
-	TickInterval   uint8
+	TickInterval   uint
 	sync.Mutex
 }
 
@@ -62,7 +70,7 @@ func (n *NamespaceController) Stop() error {
 	return nil
 }
 
-func (n *NamespaceController) ticker(stop chan bool, tickInterval uint8) {
+func (n *NamespaceController) ticker(stop chan bool, tickInterval uint) {
 	tick := time.NewTicker(time.Duration(tickInterval) * time.Second)
 	defer tick.Stop()
 	for {
