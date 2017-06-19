@@ -11,19 +11,20 @@ Whenever it encounters a namespace with the annotation `nsync.verloop.io/managed
 # Installing
 
 ```bash
-go get -u github.com/verloop/nSync
+go get -u github.com/verloop/nsync
 ```
 
 ## Local
 
 ```bash
-nSync --kubeconfig=$HOME/.kube/config
+glide install
+nsync --kubeconfig=$HOME/.kube/config
 ```
 
 ## Inside the cluster
 
 ```bash
-kubectl run verloop-nsync --image=verloopio/nsync:0.0.3
+kubectl run verloop-nsync --image=verloopio/nsync:0.0.4
 ```
 
 # Usage

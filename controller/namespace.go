@@ -76,6 +76,7 @@ func (n *NamespaceController) ticker(stop chan bool, tickInterval uint) {
 	for {
 		select {
 		case <-tick.C:
+			log.Println("Got a tick")
 			namespaces, err := n.clientSet.CoreV1().Namespaces().List(metav1.ListOptions{})
 			if err != nil {
 				log.Println("List Namespaces error", err)

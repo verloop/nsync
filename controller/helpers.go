@@ -53,7 +53,7 @@ func shouldManage(obj metav1.Object) bool {
 	managedAnnotationValue, foundAnnotation := obj.GetAnnotations()[VERLOOP_MANAGED_KEY]
 	sm, err := strconv.ParseBool(managedAnnotationValue)
 	if err != nil && foundAnnotation {
-		log.Printf("Warning: %s has bad value of managed. Expected bool, found %s\nError from ParseBool:%s", obj.GetSelfLink(), managedAnnotationValue, err)
+		log.Printf("Warning: %s has bad value of managed. Expected bool, found %s\nError from ParseBool:%s\n", obj.GetSelfLink(), managedAnnotationValue, err)
 		// Should manage is false, logic below will handle the cases well.
 	}
 	return sm

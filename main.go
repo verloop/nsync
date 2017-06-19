@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	"github.com/verloop/nSync/controller"
+	"github.com/verloop/nsync/controller"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"k8s.io/client-go/tools/clientcmd"
