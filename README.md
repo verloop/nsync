@@ -52,7 +52,7 @@ kubectl annotate configmap/global-config nsync.verloop.io/managed="true" --overw
 # Building
 
 ```bash
-CGO_ENABLED=0 GOOS=linux go build -ldflags "-s" -a -installsuffix cgo -o deploy/files/nSync .
+CGO_ENABLED=0 GOOS=linux go build -ldflags "-s" -a -installsuffix cgo -o deploy/files/nsync .
 docker build -t verloopio/nsync .
 docker push verloopio/nsync
 ```

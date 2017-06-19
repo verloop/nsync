@@ -1,5 +1,5 @@
 FROM alpine:3.5
 
-ADD deploy/files/nSync /root
+ADD deploy/files/nsync /root
 
-ENTRYPOINT ["/root/nSync"]
+ENTRYPOINT ["/root/nsync"]
