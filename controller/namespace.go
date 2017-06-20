@@ -9,6 +9,7 @@ import (
 	"os"
 	"sync"
 	"time"
+	"k8s.io/client-go/pkg/api/v1"
 )
 
 const (
@@ -87,11 +88,10 @@ func (n *NamespaceController) ticker(stop chan bool, tickInterval uint) {
 			if secretListErr != nil {
 				log.Println("List secrets error", secretListErr)
 			}
-			filteredSecrets := make([]metav1.Object, 0, len(secretList.Items))
+			filteredSecrets := make([]v1.Secret, 0, len(secretList.Items))
 			for _, secret := range secretList.Items {
 				if shouldManage(&secret) {
-					secrt := &secret
-					filteredSecrets = append(filteredSecrets, secrt)
+					filteredSecrets = append(filteredSecrets, secret)
 				}
 			}
 
@@ -100,11 +100,10 @@ func (n *NamespaceController) ticker(stop chan bool, tickInterval uint) {
 				log.Println("List configmaps error", configMapListErr)
 			}
 
-			filteredConfigMaps := make([]metav1.Object, 0, len(configMapList.Items))
+			filteredConfigMaps := make([]v1.ConfigMap, 0, len(configMapList.Items))
 			for _, configmap := range configMapList.Items {
 				if shouldManage(&configmap) {
-					cfmap := &configmap
-					filteredConfigMaps = append(filteredConfigMaps, cfmap)
+					filteredConfigMaps = append(filteredConfigMaps, configmap)
 				}
 			}
 
@@ -113,11 +112,11 @@ func (n *NamespaceController) ticker(stop chan bool, tickInterval uint) {
 					continue
 				}
 				for _, secret := range filteredSecrets {
-					apply(ENSURE, n.clientSet, namespace.GetName(), secret)
+					apply(ENSURE, n.clientSet, namespace.GetName(), &secret)
 				}
 
 				for _, configmap := range filteredConfigMaps {
-					apply(ENSURE, n.clientSet, namespace.GetName(), configmap)
+					apply(ENSURE, n.clientSet, namespace.GetName(), &configmap)
 				}
 			}
 		case <-stop:
