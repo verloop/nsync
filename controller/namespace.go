@@ -90,7 +90,8 @@ func (n *NamespaceController) ticker(stop chan bool, tickInterval uint) {
 			filteredSecrets := make([]metav1.Object, 0, len(secretList.Items))
 			for _, secret := range secretList.Items {
 				if shouldManage(&secret) {
-					filteredSecrets = append(filteredSecrets, &secret)
+					secrt := &secret
+					filteredSecrets = append(filteredSecrets, secrt)
 				}
 			}
 
@@ -102,7 +103,8 @@ func (n *NamespaceController) ticker(stop chan bool, tickInterval uint) {
 			filteredConfigMaps := make([]metav1.Object, 0, len(configMapList.Items))
 			for _, configmap := range configMapList.Items {
 				if shouldManage(&configmap) {
-					filteredConfigMaps = append(filteredConfigMaps, &configmap)
+					cfmap := &configmap
+					filteredConfigMaps = append(filteredConfigMaps, cfmap)
 				}
 			}
 

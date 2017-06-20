@@ -14,4 +14,4 @@ spec:
     spec:
       containers:
       - name: verloop-nsync
-        image: verloopio/nsync:0.0.4
+        image: verloopio/nsync:0.0.5
