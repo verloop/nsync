@@ -24,7 +24,7 @@ nsync --kubeconfig=$HOME/.kube/config
 ## Inside the cluster
 
 ```bash
-kubectl run verloop-nsync --image=verloopio/nsync:0.0.6
+kubectl run verloop-nsync --image=verloopio/nsync:0.0.7
 ```
 
 # Usage
