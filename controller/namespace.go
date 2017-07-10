@@ -59,9 +59,9 @@ type NamespaceController struct {
 }
 
 func (n *NamespaceController) Start() error {
-	go n.watchNs(n.stopChan)
-	go n.watchResource(n.stopChan, SECRET)
-	go n.watchResource(n.stopChan, CONFIGMAP)
+	//go n.watchNs(n.stopChan)
+	//go n.watchResource(n.stopChan, SECRET)
+	//go n.watchResource(n.stopChan, CONFIGMAP)
 	go n.ticker(n.stopChan, n.TickInterval)
 	return nil
 }
