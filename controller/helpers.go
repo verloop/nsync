@@ -15,14 +15,14 @@ func apply(action Action, clientset *kubernetes.Clientset, namespace string, obj
 	if action == SKIP {
 		return
 	}
-	log_prefix := fmt.Sprintf("[%s] %T->%s: %s:", namespace, object, object.GetName(), ActionName[action])
+	logPrefix := fmt.Sprintf("[%s] %T->%s: %s:", namespace, object, object.GetName(), ActionName[action])
 
 	var err error
 	switch action {
 	case ENSURE:
 		object = prepareObject(object)
 		if object == nil {
-			log.Println(log_prefix, "Skipping")
+			log.Println(logPrefix, "Skipping")
 			return
 		}
 
@@ -32,17 +32,17 @@ func apply(action Action, clientset *kubernetes.Clientset, namespace string, obj
 				err = create(clientset, namespace, object)
 			}
 			if err != nil {
-				log.Println(log_prefix, "Error:", err)
+				log.Println(logPrefix, "Error:", err)
 			}
 		}
 	case REMOVE:
 		err = remove(clientset, namespace, object)
 		if err != nil {
-			log.Println(log_prefix, "Error:", err)
+			log.Println(logPrefix, "Error:", err)
 		}
 	}
 	if err == nil {
-		log.Println(log_prefix, "Successful")
+		log.Println(logPrefix, "Successful")
 	}
 }
 
@@ -50,7 +50,7 @@ func shouldManage(obj metav1.Object) bool {
 	if obj == nil {
 		return false
 	}
-	managedAnnotationValue, foundAnnotation := obj.GetAnnotations()[VERLOOP_MANAGED_KEY]
+	managedAnnotationValue, foundAnnotation := obj.GetAnnotations()[VerloopManagedKey]
 	sm, err := strconv.ParseBool(managedAnnotationValue)
 	if err != nil && foundAnnotation {
 		log.Printf("Warning: %s has bad value of managed. Expected bool, found %s\nError from ParseBool:%s\n", obj.GetSelfLink(), managedAnnotationValue, err)
@@ -70,7 +70,7 @@ func prepareObject(object metav1.Object) metav1.Object {
 			annotations = make(map[string]string)
 		}
 		delete(annotations, "kubectl.kubernetes.io/last-applied-configuration")
-		annotations[VERLOOP_MANAGED_KEY] = "true"
+		annotations[VerloopManagedKey] = "true"
 		object.SetAnnotations(annotations)
 		object.SetUID("")
 		object.SetResourceVersion("")

@@ -1,5 +1,0 @@
-package: github.com/verloop/nsync
-import:
-- package: k8s.io/client-go
-  version: ^3.0.0-beta.0
-- package: k8s.io/apimachinery

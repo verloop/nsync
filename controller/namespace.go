@@ -3,30 +3,30 @@ package controller
 import (
 	"io/ioutil"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/pkg/api/v1"
 	"log"
 	"os"
 	"sync"
 	"time"
-	"k8s.io/client-go/pkg/api/v1"
 )
 
 const (
-	MIN_TICK_INTERVAL = 10
-	MAX_TICK_INTERVAL = 300
+	minTickInterval = 10
+	maxTickInterval = 300
 )
 
+// NewNamespaceController - Creates a NamespaceController given a k8s clientset and a tick interval
 func NewNamespaceController(clientset *kubernetes.Clientset, tickInterval uint) *NamespaceController {
 	managed := make(map[ObjectType]map[string]bool)
 	managed[NAMESPACE] = make(map[string]bool)
 	managed[CONFIGMAP] = make(map[string]bool)
 	managed[SECRET] = make(map[string]bool)
-	if tickInterval < MIN_TICK_INTERVAL {
-		tickInterval = MIN_TICK_INTERVAL
+	if tickInterval < minTickInterval {
+		tickInterval = minTickInterval
 	}
-	if tickInterval > MAX_TICK_INTERVAL {
-		tickInterval = MAX_TICK_INTERVAL
+	if tickInterval > maxTickInterval {
+		tickInterval = maxTickInterval
 	}
 
 	// Check if namespace is given from outside
@@ -49,6 +49,7 @@ func NewNamespaceController(clientset *kubernetes.Clientset, tickInterval uint) 
 	}
 }
 
+// NamespaceController - Periodically sync Secrets and ConfigMaps from current namespace to all namespaces.
 type NamespaceController struct {
 	watchNamespace string
 	clientSet      *kubernetes.Clientset
@@ -58,6 +59,7 @@ type NamespaceController struct {
 	sync.Mutex
 }
 
+// Start - Start running the watcher
 func (n *NamespaceController) Start() error {
 	//go n.watchNs(n.stopChan)
 	//go n.watchResource(n.stopChan, SECRET)
@@ -66,6 +68,7 @@ func (n *NamespaceController) Start() error {
 	return nil
 }
 
+// Stop watching the watcher
 func (n *NamespaceController) Stop() error {
 	close(n.stopChan)
 	return nil
@@ -125,96 +128,96 @@ func (n *NamespaceController) ticker(stop chan bool, tickInterval uint) {
 	}
 }
 
-func (n *NamespaceController) watchResource(stop chan bool, objType ObjectType) {
-
-	resourceWatcher := watcher(n.clientSet, n.watchNamespace, objType)
-	log.Println("Start watching", ObjectName[objType])
-
-	resultChan := resourceWatcher.ResultChan()
-	for {
-		select {
-		case event := <-resultChan:
-			resource, action := n.objHandler(objType, event)
-			if action == SKIP || resource == nil {
-				continue
-			}
-			namespaces, err := n.clientSet.CoreV1().Namespaces().List(metav1.ListOptions{})
-			if err != nil {
-				log.Println("List Namespaces error", err)
-				continue
-			}
-
-			for _, namespace := range namespaces.Items {
-				if !shouldManage(&namespace) {
-					continue
-				}
-				apply(action, n.clientSet, namespace.GetName(), resource)
-			}
-		case <-stop:
-			return
-		}
-	}
-}
-
-func (n *NamespaceController) watchNs(stop chan bool) {
-	namespaces, err := n.clientSet.CoreV1().Namespaces().Watch(metav1.ListOptions{})
-	if err != nil {
-		log.Fatalln(err)
-	}
-	log.Println("Start watching namespaces")
-	resultChan := namespaces.ResultChan()
-	for {
-		select {
-		case event := <-resultChan:
-			ns, action := n.objHandler(NAMESPACE, event)
-			if action == SKIP {
-				continue
-			}
-			secretList, err := n.clientSet.CoreV1().Secrets(n.watchNamespace).List(metav1.ListOptions{})
-			if err == nil {
-				for _, secret := range secretList.Items {
-					apply(action, n.clientSet, ns.GetName(), &secret)
-				}
-			} else {
-				log.Println("List secrets error", err)
-			}
-
-			configMapList, err := n.clientSet.CoreV1().ConfigMaps(n.watchNamespace).List(metav1.ListOptions{})
-			if err == nil {
-				for _, configmap := range configMapList.Items {
-					apply(action, n.clientSet, ns.GetName(), &configmap)
-				}
-			} else {
-				log.Println("List configmap error", err)
-			}
-
-		case <-stop:
-			return
-		}
-	}
-}
-
-func (n *NamespaceController) objHandler(objType ObjectType, event watch.Event) (obj metav1.Object, action Action) {
-	if event.Object == nil {
-		return
-	}
-	n.Lock()
-	defer n.Unlock()
-	obj = event.Object.(metav1.Object)
-	isManaged := n.managed[objType][obj.GetName()]
-
-	shouldManage := shouldManage(obj) && event.Type != watch.Deleted
-
-	if shouldManage && (!isManaged || (isManaged && event.Type == watch.Modified)) {
-		n.managed[objType][obj.GetName()] = true
-		action = ENSURE
-	}
-
-	if !shouldManage && isManaged {
-		delete(n.managed[objType], obj.GetName())
-		action = REMOVE
-	}
-	//log.Printf("Type: %T  Name: %s  Should manage: %t, Is Managed: %t, event Type: %s Action: %s\n",obj,obj.GetName(),shouldManage,isManaged,event.Type,ActionName[action])
-
-	return
-}
+//func (n *NamespaceController) watchResource(stop chan bool, objType ObjectType) {
+//
+//	resourceWatcher := watcher(n.clientSet, n.watchNamespace, objType)
+//	log.Println("Start watching", ObjectName[objType])
+//
+//	resultChan := resourceWatcher.ResultChan()
+//	for {
+//		select {
+//		case event := <-resultChan:
+//			resource, action := n.objHandler(objType, event)
+//			if action == SKIP || resource == nil {
+//				continue
+//			}
+//			namespaces, err := n.clientSet.CoreV1().Namespaces().List(metav1.ListOptions{})
+//			if err != nil {
+//				log.Println("List Namespaces error", err)
+//				continue
+//			}
+//
+//			for _, namespace := range namespaces.Items {
+//				if !shouldManage(&namespace) {
+//					continue
+//				}
+//				apply(action, n.clientSet, namespace.GetName(), resource)
+//			}
+//		case <-stop:
+//			return
+//		}
+//	}
+//}
+//
+//func (n *NamespaceController) watchNs(stop chan bool) {
+//	namespaces, err := n.clientSet.CoreV1().Namespaces().Watch(metav1.ListOptions{})
+//	if err != nil {
+//		log.Fatalln(err)
+//	}
+//	log.Println("Start watching namespaces")
+//	resultChan := namespaces.ResultChan()
+//	for {
+//		select {
+//		case event := <-resultChan:
+//			ns, action := n.objHandler(NAMESPACE, event)
+//			if action == SKIP {
+//				continue
+//			}
+//			secretList, err := n.clientSet.CoreV1().Secrets(n.watchNamespace).List(metav1.ListOptions{})
+//			if err == nil {
+//				for _, secret := range secretList.Items {
+//					apply(action, n.clientSet, ns.GetName(), &secret)
+//				}
+//			} else {
+//				log.Println("List secrets error", err)
+//			}
+//
+//			configMapList, err := n.clientSet.CoreV1().ConfigMaps(n.watchNamespace).List(metav1.ListOptions{})
+//			if err == nil {
+//				for _, configmap := range configMapList.Items {
+//					apply(action, n.clientSet, ns.GetName(), &configmap)
+//				}
+//			} else {
+//				log.Println("List configmap error", err)
+//			}
+//
+//		case <-stop:
+//			return
+//		}
+//	}
+//}
+//
+//func (n *NamespaceController) objHandler(objType ObjectType, event watch.Event) (obj metav1.Object, action Action) {
+//	if event.Object == nil {
+//		return
+//	}
+//	n.Lock()
+//	defer n.Unlock()
+//	obj = event.Object.(metav1.Object)
+//	isManaged := n.managed[objType][obj.GetName()]
+//
+//	shouldManage := shouldManage(obj) && event.Type != watch.Deleted
+//
+//	if shouldManage && (!isManaged || (isManaged && event.Type == watch.Modified)) {
+//		n.managed[objType][obj.GetName()] = true
+//		action = ENSURE
+//	}
+//
+//	if !shouldManage && isManaged {
+//		delete(n.managed[objType], obj.GetName())
+//		action = REMOVE
+//	}
+//	//log.Printf("Type: %T  Name: %s  Should manage: %t, Is Managed: %t, event Type: %s Action: %s\n",obj,obj.GetName(),shouldManage,isManaged,event.Type,ActionName[action])
+//
+//	return
+//}
