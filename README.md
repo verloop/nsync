@@ -17,14 +17,14 @@ go get -u github.com/verloop/nsync
 ## Local
 
 ```bash
-glide install
+dep ensure
 nsync --kubeconfig=$HOME/.kube/config
 ```
 
 ## Inside the cluster
 
 ```bash
-kubectl run verloop-nsync --image=verloopio/nsync:0.0.7
+kubectl run verloop-nsync --image=verloopio/nsync:0.0.8
 ```
 
 # Usage
