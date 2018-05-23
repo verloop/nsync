@@ -23,6 +23,7 @@
 
 [[constraint]]
   name = "k8s.io/apimachinery"
+  revision="75b8dd260ef0469d96d578705a87cffd0e09dab8"
 
 [[constraint]]
   name = "k8s.io/client-go"

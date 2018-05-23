@@ -2,13 +2,15 @@ package controller
 
 import (
 	"fmt"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
 	"log"
 	"time"
 
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+
 	"strconv"
+
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 func apply(action Action, clientset *kubernetes.Clientset, namespace string, object metav1.Object) {

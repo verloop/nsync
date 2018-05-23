@@ -1,11 +1,12 @@
 package controller
 
 import (
+	"log"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/pkg/api/v1"
-	"log"
 )
 
 func watcher(clientset *kubernetes.Clientset, namespace string, objectType ObjectType) (watch watch.Interface) {
