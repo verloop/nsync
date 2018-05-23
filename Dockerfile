@@ -1,5 +1,10 @@
-FROM alpine:3.5
+FROM golang:1.10 as build
+WORKDIR /go/src/app
+ADD . /go/src/app
+RUN curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+RUN dep ensure
+RUN go install .
 
-ADD deploy/files/nsync /root
-
-ENTRYPOINT ["/root/nsync"]
+FROM gcr.io/distroless/base
+COPY --from=build /go/bin/app /
+ENTRYPOINT ["/app"]
