@@ -2,14 +2,16 @@ package main
 
 import (
 	"flag"
+	"os"
+	"os/signal"
+	"strconv"
+	"syscall"
+
+	"github.com/sirupsen/logrus"
 	"github.com/verloop/nsync/controller"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"k8s.io/client-go/tools/clientcmd"
-	"log"
-	"os"
-	"os/signal"
-	"syscall"
 )
 
 func main() {
@@ -21,37 +23,59 @@ func main() {
 
 	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 	if err != nil {
-		log.Fatalln(err.Error())
+		logrus.WithError(err).Fatalln("failed to build config from flag")
 	}
 
 	// create the clientset
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		log.Fatalln("clientset error:", err)
+		logrus.WithError(err).Fatalln("clientset error")
 	}
 	nc := controller.NewNamespaceController(clientset, tickInterval)
-
+	logrus.Info("Starting server")
 	err = nc.Start()
 	if err != nil {
-		log.Fatalln("Start error:", err)
+		logrus.WithError(err).Fatalln("start error")
 	}
 	handleSigTerm(nc)
-	log.Println("Stopped server")
+	logrus.Info("Stopped server")
 }
 
 func handleSigTerm(namespaceController *controller.NamespaceController) {
-	signalChan := make(chan os.Signal, 1)
-	signal.Notify(signalChan, syscall.SIGTERM)
-	<-signalChan
-	log.Println("Received SIGTERM, shutting down")
+	deathRay := make(chan os.Signal, 2)
+	signal.Notify(deathRay, syscall.SIGINT, syscall.SIGTERM)
+	<-deathRay
+	logrus.Info("shutting down")
 
 	exitCode := 0
 	if err := namespaceController.Stop(); err != nil {
-		log.Printf("Error during shutdown %v", err)
+		logrus.WithError(err).Info("error during shutdown")
 		exitCode = 1
 	}
 
-	log.Printf("Exiting with %v", exitCode)
+	logrus.WithField("exit_code", exitCode).Info("exiting")
 	os.Exit(exitCode)
 
+}
+
+func init() {
+	// Log as JSON instead of the default ASCII formatter.
+	logrus.SetFormatter(&logrus.JSONFormatter{
+		FieldMap: logrus.FieldMap{
+			logrus.FieldKeyTime:  "timestamp",
+			logrus.FieldKeyLevel: "severity",
+			logrus.FieldKeyMsg:   "message",
+		},
+	})
+
+	// Output to stdout instead of the default stderr
+	logrus.SetOutput(os.Stdout)
+
+	debug, _ := strconv.ParseBool(os.Getenv("DEBUG"))
+
+	if debug {
+		logrus.SetLevel(logrus.DebugLevel)
+	} else {
+		logrus.SetLevel(logrus.InfoLevel)
+	}
 }

@@ -1,29 +1,11 @@
 package controller
 
 import (
-	"log"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/pkg/api/v1"
+
+	v1 "k8s.io/api/core/v1"
 )
-
-func watcher(clientset *kubernetes.Clientset, namespace string, objectType ObjectType) (watch watch.Interface) {
-	var err error
-	switch objectType {
-	case SECRET:
-		watch, err = clientset.CoreV1().Secrets(namespace).Watch(metav1.ListOptions{})
-	case CONFIGMAP:
-		watch, err = clientset.CoreV1().ConfigMaps(namespace).Watch(metav1.ListOptions{})
-	}
-
-	if err != nil {
-		log.Fatalln(err)
-	}
-	return
-
-}
 
 func update(clientset *kubernetes.Clientset, namespace string, object metav1.Object) (err error) {
 	switch object.(type) {

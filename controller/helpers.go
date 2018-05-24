@@ -1,9 +1,9 @@
 package controller
 
 import (
-	"fmt"
-	"log"
 	"time"
+
+	"github.com/sirupsen/logrus"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -17,14 +17,19 @@ func apply(action Action, clientset *kubernetes.Clientset, namespace string, obj
 	if action == SKIP {
 		return
 	}
-	logPrefix := fmt.Sprintf("[%s] %T->%s: %s:", namespace, object, object.GetName(), ActionName[action])
+	entry := logrus.WithFields(logrus.Fields{
+		"namespace":     namespace,
+		"name":          object.GetName(),
+		"action":        ActionName[action],
+		"source_object": object.GetSelfLink(),
+	})
 
 	var err error
 	switch action {
 	case ENSURE:
 		object = prepareObject(object)
 		if object == nil {
-			log.Println(logPrefix, "Skipping")
+			entry.Info("skipping")
 			return
 		}
 
@@ -34,17 +39,17 @@ func apply(action Action, clientset *kubernetes.Clientset, namespace string, obj
 				err = create(clientset, namespace, object)
 			}
 			if err != nil {
-				log.Println(logPrefix, "Error:", err)
+				entry.WithError(err).Error("couldn't ensure")
 			}
 		}
 	case REMOVE:
 		err = remove(clientset, namespace, object)
 		if err != nil {
-			log.Println(logPrefix, "Error:", err)
+			entry.WithError(err).Error("couldn't remove")
 		}
 	}
 	if err == nil {
-		log.Println(logPrefix, "Successful")
+		entry.Info("successful")
 	}
 }
 
@@ -55,7 +60,11 @@ func shouldManage(obj metav1.Object) bool {
 	managedAnnotationValue, foundAnnotation := obj.GetAnnotations()[VerloopManagedKey]
 	sm, err := strconv.ParseBool(managedAnnotationValue)
 	if err != nil && foundAnnotation {
-		log.Printf("Warning: %s has bad value of managed. Expected bool, found %s\nError from ParseBool:%s\n", obj.GetSelfLink(), managedAnnotationValue, err)
+		logrus.WithError(err).WithFields(logrus.Fields{
+			"self_link": obj.GetSelfLink(),
+			"expected":  "bool",
+			"got":       managedAnnotationValue,
+		}).Warn("bad value of `managed`")
 		// Should manage is false, logic below will handle the cases well.
 	}
 	return sm
