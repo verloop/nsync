@@ -23,6 +23,7 @@ spec:
         app: {{ template "nsync.name" . }}
         release: {{ .Release.Name }}
     spec:
+      serviceAccountName: {{ template "nsync.serviceAccountName" . }}
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
