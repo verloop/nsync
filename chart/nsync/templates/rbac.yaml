@@ -1,0 +1,37 @@
+{{- if .Values.rbac.create -}}
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  name: {{ template "nsync.fullname" . }}
+  labels:
+    app: {{ template "nsync.name" . }}
+    chart: {{ template "nsync.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps", "secrets"]
+    verbs: ["create", "get", "watch", "list", "update", "patch"]
+  - apiGroups: [""]
+    resources: ["namespaces"]
+    verbs: ["get", "watch", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ template "nsync.fullname" . }}
+  labels:
+    app: {{ template "nsync.name" . }}
+    chart: {{ template "nsync.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ template "nsync.fullname" . }}
+subjects:
+  - name: {{ template "nsync.serviceAccountName" . }}
+    namespace: {{ .Release.Namespace | quote }}
+    kind: ServiceAccount
+{{- end -}}
+
